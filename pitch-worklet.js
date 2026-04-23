@@ -1,4 +1,3 @@
-if (!globalThis.__metroTunePitchProcessorRegistered) {
     class PitchProcessor extends AudioWorkletProcessor {
         constructor(options) {
             super();
@@ -287,5 +286,4 @@ if (!globalThis.__metroTunePitchProcessorRegistered) {
     }
 
     registerProcessor('pitch-processor', PitchProcessor);
-    globalThis.__metroTunePitchProcessorRegistered = true;
 }
