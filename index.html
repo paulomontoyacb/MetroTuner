@@ -68,6 +68,7 @@
 
     <section class="accordatore">
         <h2 class="panel-title">Accordatore</h2>
+
         <div class="accordatore-display">
             <div class="accordatore-nota" id="tunerNote">--</div>
             <div class="accordatore-freq" id="tunerFreq">0.00 Hz</div>
@@ -103,6 +104,14 @@
                 <select id="tuningReference" class="selettore-tempo">
                     <option value="440" selected>La = 440 Hz</option>
                     <option value="442">La = 442 Hz</option>
+                </select>
+            </div>
+
+            <div class="opzione-riga">
+                <label for="tunerMode">Modalità</label>
+                <select id="tunerMode" class="selettore-tempo">
+                    <option value="standard" selected>Standard</option>
+                    <option value="bassi">Bassi</option>
                 </select>
             </div>
         </div>
