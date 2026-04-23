@@ -64,7 +64,6 @@ let tunerAudioContext = null;
 let tunerMediaStream = null;
 let tunerSourceNode = null;
 let tunerWorkletNode = null;
-let tunerStartPromise = null;
 
 const recentFrequencies = [];
 const recentCents = [];
@@ -424,11 +423,10 @@ function sendModeToWorklet() {
 }
 
 async function startTuner() {
-    if (tunerAudioContext || tunerStartPromise) {
+    if (tunerAudioContext) {
         return;
     }
 
-    tunerStartPromise = (async () => {
         try {
             tunerStatusEl.textContent = 'Richiedo accesso al microfono...';
 
@@ -475,12 +473,7 @@ async function startTuner() {
             console.error(error);
             tunerStatusEl.textContent = 'Errore nell\'avvio del microfono.';
             await stopTuner(false);
-        } finally {
-            tunerStartPromise = null;
         }
-    })();
-
-    await tunerStartPromise;
 }
 
 async function stopTuner(resetMessage = true) {
