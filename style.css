@@ -435,8 +435,10 @@ body {
 }
 
 .accordatore-stato {
-    min-height: 1.6em;
-    font-size: 1rem;
+    min-height: 2.4em;
+    font-size: 1.85rem;
+    font-weight: bold;
+    line-height: 1.2;
     color: #6e5a45;
 }
 
