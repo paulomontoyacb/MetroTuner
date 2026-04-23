@@ -64,6 +64,7 @@ let tunerAudioContext = null;
 let tunerMediaStream = null;
 let tunerSourceNode = null;
 let tunerWorkletNode = null;
+let tunerStartPromise = null;
 
 const recentFrequencies = [];
 const recentCents = [];
@@ -423,57 +424,63 @@ function sendModeToWorklet() {
 }
 
 async function startTuner() {
-    if (tunerAudioContext) {
+    if (tunerAudioContext || tunerStartPromise) {
         return;
     }
 
-    try {
-        tunerStatusEl.textContent = 'Richiedo accesso al microfono...';
+    tunerStartPromise = (async () => {
+        try {
+            tunerStatusEl.textContent = 'Richiedo accesso al microfono...';
 
-        tunerMediaStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                channelCount: 1,
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false
-            },
-            video: false
-        });
+            tunerMediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    channelCount: 1,
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                },
+                video: false
+            });
 
-        tunerAudioContext = new AudioContext({
-            latencyHint: 'interactive',
-            sampleRate: 44100
-        });
+            tunerAudioContext = new AudioContext({
+                latencyHint: 'interactive',
+                sampleRate: 44100
+            });
 
-        await tunerAudioContext.audioWorklet.addModule('./pitch-worklet.js');
+            await tunerAudioContext.audioWorklet.addModule('./pitch-worklet.js');
 
-        tunerSourceNode = tunerAudioContext.createMediaStreamSource(tunerMediaStream);
-        tunerWorkletNode = new AudioWorkletNode(tunerAudioContext, 'pitch-processor', {
-            processorOptions: {
-                sampleRate: tunerAudioContext.sampleRate,
-                mode: currentMode
-            }
-        });
+            tunerSourceNode = tunerAudioContext.createMediaStreamSource(tunerMediaStream);
+            tunerWorkletNode = new AudioWorkletNode(tunerAudioContext, 'pitch-processor', {
+                processorOptions: {
+                    sampleRate: tunerAudioContext.sampleRate,
+                    mode: currentMode
+                }
+            });
 
-        tunerWorkletNode.port.onmessage = (event) => {
-            const { pitch, clarity, rms, isAttack } = event.data;
-            processPitchEstimate(pitch, clarity, rms, isAttack);
-        };
+            tunerWorkletNode.port.onmessage = (event) => {
+                const { pitch, clarity, rms, isAttack } = event.data;
+                processPitchEstimate(pitch, clarity, rms, isAttack);
+            };
 
-        tunerSourceNode.connect(tunerWorkletNode);
+            tunerSourceNode.connect(tunerWorkletNode);
 
-        const silentGain = tunerAudioContext.createGain();
-        silentGain.gain.value = 0;
-        tunerWorkletNode.connect(silentGain).connect(tunerAudioContext.destination);
+            const silentGain = tunerAudioContext.createGain();
+            silentGain.gain.value = 0;
+            tunerWorkletNode.connect(silentGain).connect(tunerAudioContext.destination);
 
-        sendModeToWorklet();
-        aggiornaBottoneMicrofono();
-        tunerStatusEl.textContent = `Ascolto in corso (${currentMode}).`;
-    } catch (error) {
-        console.error(error);
-        tunerStatusEl.textContent = 'Errore nell\'avvio del microfono.';
-        await stopTuner(false);
-    }
+            sendModeToWorklet();
+            aggiornaBottoneMicrofono();
+            tunerStatusEl.textContent = `Ascolto in corso (${currentMode}).`;
+        } catch (error) {
+            console.error(error);
+            tunerStatusEl.textContent = 'Errore nell\'avvio del microfono.';
+            await stopTuner(false);
+        } finally {
+            tunerStartPromise = null;
+        }
+    })();
+
+    await tunerStartPromise;
 }
 
 async function stopTuner(resetMessage = true) {
