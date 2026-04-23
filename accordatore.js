@@ -30,7 +30,6 @@ const TUNER_MODES = {
         minRmsLow: 0.0010,
         minRmsMid: 0.0008,
         minRmsHigh: 0.0005,
-        lowCutoffHz: 180,
         lockRequirementLow: 2,
         lockRequirementMid: 1,
         lockRequirementHigh: 1,
@@ -52,7 +51,6 @@ const TUNER_MODES = {
         minRmsLow: 0.0008,
         minRmsMid: 0.0008,
         minRmsHigh: 0.0006,
-        lowCutoffHz: 140,
         lockRequirementLow: 3,
         lockRequirementMid: 2,
         lockRequirementHigh: 1,
@@ -78,7 +76,7 @@ let lastCandidateNote = null;
 let frameCounter = 0;
 let lastDisplayedFrequency = null;
 let attackHoldFrames = 0;
-let tuningA4 = 440;
+let tuningA4 = 442;
 let currentMode = getSelectedModeName();
 
 function getSelectedModeName() {
