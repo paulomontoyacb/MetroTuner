@@ -4,7 +4,6 @@ let contatore = 1;
 let bpm = 60;
 let battitiPerMisura = 4;
 let suddivisione = 1;
-let indiceSuddivisione = 1;
 
 let battereAttivo = true;
 let coloriAttivi = true;
@@ -12,15 +11,14 @@ let metronomoAttivo = false;
 let avvioCorrente = 0;
 
 let schedulerInterval = null;
-let timeoutAnimazione;
-let timeoutIlluminazione;
+let uiTimeouts = [];
 
 let nextNoteTime = 0;
 let currentBeatNumber = 1;
 let currentSubdivision = 1;
 
-const lookahead = 25; // ms: ogni quanto gira lo scheduler
-const scheduleAheadTime = 0.1; // sec: quanto avanti schedulare
+const lookahead = 20;          // ms
+const scheduleAheadTime = 0.12; // sec
 
 const metronomeToggleBtn = document.getElementById('metronomeToggleBtn');
 const metronomoBox = document.querySelector('.metronomo');
@@ -49,6 +47,10 @@ function aggiornaTempo(nuovoTempo) {
         contatore = 1;
     }
 
+    if (currentBeatNumber > battitiPerMisura) {
+        currentBeatNumber = 1;
+    }
+
     aggiornaDisplayConteggio();
 }
 
@@ -56,8 +58,8 @@ function aggiornaSuddivisione(nuovaSuddivisione) {
     suddivisione = Number(nuovaSuddivisione);
     subdivisionSelect.value = suddivisione;
 
-    if (indiceSuddivisione > suddivisione) {
-        indiceSuddivisione = 1;
+    if (currentSubdivision > suddivisione) {
+        currentSubdivision = 1;
     }
 
     aggiornaDisplayConteggio();
@@ -65,60 +67,64 @@ function aggiornaSuddivisione(nuovaSuddivisione) {
 
 function aggiornaDisplayConteggio() {
     contatoreVisivo.textContent = contatore;
-    sottoContatoreVisivo.textContent = '';
+    sottoContatoreVisivo.textContent = suddivisione > 1 ? `${currentSubdivision}/${suddivisione}` : '';
 }
 
-function aggiornaContatoreVisivo(inizioBattito) {
-    aggiornaDisplayConteggio();
-
-    if (!inizioBattito) return;
-
+function resetUIState() {
     contatoreVisivo.classList.remove('attivo');
-    void contatoreVisivo.offsetWidth;
-    contatoreVisivo.classList.add('attivo');
-
-    clearTimeout(timeoutAnimazione);
-    timeoutAnimazione = setTimeout(() => {
-        contatoreVisivo.classList.remove('attivo');
-    }, 120);
+    metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
 }
 
-function illuminaRiquadro(inizioBattito) {
+function clearAllUiTimeouts() {
+    uiTimeouts.forEach(clearTimeout);
+    uiTimeouts = [];
+}
+
+function triggerContatoreAnimation() {
+    contatoreVisivo.classList.remove('attivo');
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            contatoreVisivo.classList.add('attivo');
+
+            const t = setTimeout(() => {
+                contatoreVisivo.classList.remove('attivo');
+            }, 120);
+
+            uiTimeouts.push(t);
+        });
+    });
+}
+
+function triggerBoxLight(isFirstBeat) {
     if (!coloriAttivi) {
         metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
         return;
     }
 
-    let classeAttiva = '';
-    let durataIlluminazione = 0;
-
-    if (inizioBattito && contatore === 1) {
-        classeAttiva = 'attivo-battere';
-        durataIlluminazione = 250;
-    } else if (inizioBattito) {
-        classeAttiva = 'attivo-tempo';
-        durataIlluminazione = 150;
-    }
-
     metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
 
-    if (!classeAttiva) return;
+    const className = isFirstBeat ? 'attivo-battere' : 'attivo-tempo';
+    const duration = isFirstBeat ? 250 : 150;
 
-    void metronomoBox.offsetWidth;
-    metronomoBox.classList.add(classeAttiva);
+    requestAnimationFrame(() => {
+        metronomoBox.classList.add(className);
 
-    clearTimeout(timeoutIlluminazione);
-    timeoutIlluminazione = setTimeout(() => {
-        metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
-    }, durataIlluminazione);
+        const t = setTimeout(() => {
+            metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
+        }, duration);
+
+        uiTimeouts.push(t);
+    });
 }
 
 function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     const oscillatore = context.createOscillator();
     const gainNode = context.createGain();
+
     const durataStep = 60 / (bpm * suddivisione);
-    const attack = 0.004;
-    const durataSuono = Math.min(0.11, Math.max(0.045, durataStep * 0.55));
+    const attack = 0.003;
+    const durataSuono = Math.min(0.09, Math.max(0.035, durataStep * 0.45));
     const stopTime = when + durataSuono;
 
     oscillatore.type = 'sine';
@@ -128,7 +134,9 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     gainNode.gain.exponentialRampToValueAtTime(volumePicco, when + attack);
     gainNode.gain.exponentialRampToValueAtTime(0.0001, stopTime);
 
-    oscillatore.connect(gainNode).connect(context.destination);
+    oscillatore.connect(gainNode);
+    gainNode.connect(context.destination);
+
     oscillatore.start(when);
     oscillatore.stop(stopTime + 0.01);
 
@@ -136,6 +144,31 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
         oscillatore.disconnect();
         gainNode.disconnect();
     }, { once: true });
+}
+
+function aggiornaUiSchedulata(when, beatNumber, subdivisionNumber) {
+    const delayMs = Math.max(0, (when - context.currentTime) * 1000);
+    const inizioBattito = subdivisionNumber === 1;
+    const isFirstBeat = inizioBattito && beatNumber === 1;
+
+    const t = setTimeout(() => {
+        if (!metronomoAttivo) return;
+
+        contatore = beatNumber;
+        currentSubdivision = subdivisionNumber;
+
+        contatoreVisivo.textContent = beatNumber;
+        sottoContatoreVisivo.textContent = suddivisione > 1 ? `${subdivisionNumber}/${suddivisione}` : '';
+
+        if (inizioBattito) {
+            triggerContatoreAnimation();
+            triggerBoxLight(isFirstBeat);
+        } else if (coloriAttivi) {
+            metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
+        }
+    }, delayMs);
+
+    uiTimeouts.push(t);
 }
 
 function scheduleBeat(when, beatNumber, subdivisionNumber) {
@@ -146,20 +179,10 @@ function scheduleBeat(when, beatNumber, subdivisionNumber) {
     } else if (inizioBattito) {
         riproduciColpoSchedulato(440, 0.18, when);
     } else {
-        riproduciColpoSchedulato(330, 0.12, when);
+        riproduciColpoSchedulato(330, 0.11, when);
     }
 
-    const delayMs = Math.max(0, (when - context.currentTime) * 1000);
-
-    setTimeout(() => {
-        if (!metronomoAttivo) return;
-
-        contatore = beatNumber;
-        indiceSuddivisione = subdivisionNumber;
-
-        aggiornaContatoreVisivo(inizioBattito);
-        illuminaRiquadro(inizioBattito);
-    }, delayMs);
+    aggiornaUiSchedulata(when, beatNumber, subdivisionNumber);
 }
 
 function advanceNote() {
@@ -190,20 +213,26 @@ function aggiornaBottoneMetronomo() {
     metronomeToggleBtn.value = metronomoAttivo ? 'Spegni metronomo' : 'Accendi metronomo';
 }
 
+function riallineaClock() {
+    nextNoteTime = context.currentTime + 0.06;
+}
+
 async function avviaMetronomo() {
     const idAvvio = ++avvioCorrente;
 
     metronomoAttivo = true;
     aggiornaBottoneMetronomo();
     fermaScheduler();
+    clearAllUiTimeouts();
+    resetUIState();
 
     await context.resume();
 
     if (!metronomoAttivo || idAvvio !== avvioCorrente) return;
 
-    nextNoteTime = context.currentTime + 0.05;
     currentBeatNumber = contatore;
-    currentSubdivision = indiceSuddivisione;
+    currentSubdivision = 1;
+    riallineaClock();
 
     scheduler();
     schedulerInterval = setInterval(scheduler, lookahead);
@@ -212,20 +241,27 @@ async function avviaMetronomo() {
 function fermaMetronomo() {
     metronomoAttivo = false;
     avvioCorrente++;
-    fermaScheduler();
 
-    clearTimeout(timeoutAnimazione);
-    clearTimeout(timeoutIlluminazione);
+    fermaScheduler();
+    clearAllUiTimeouts();
 
     contatore = 1;
-    indiceSuddivisione = 1;
     currentBeatNumber = 1;
     currentSubdivision = 1;
 
     aggiornaDisplayConteggio();
-    contatoreVisivo.classList.remove('attivo');
-    metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
+    resetUIState();
     aggiornaBottoneMetronomo();
+}
+
+function clampBpm(valore) {
+    let nuovoBpm = Math.round(Number(valore));
+
+    if (Number.isNaN(nuovoBpm)) return bpm;
+    if (nuovoBpm < 30) nuovoBpm = 30;
+    if (nuovoBpm > 250) nuovoBpm = 250;
+
+    return nuovoBpm;
 }
 
 function applicaBpmDaInput() {
@@ -237,31 +273,19 @@ function applicaBpmDaInput() {
         return;
     }
 
-    let nuovoBpm = Number(valoreInserito);
-
-    if (Number.isNaN(nuovoBpm)) {
-        bpmInput.value = bpm;
-        bpmValue.textContent = bpm;
-        return;
-    }
-
-    nuovoBpm = Math.round(nuovoBpm);
-
-    if (nuovoBpm < 30) nuovoBpm = 30;
-    if (nuovoBpm > 250) nuovoBpm = 250;
-
+    const nuovoBpm = clampBpm(valoreInserito);
     aggiornaVisualeBpm(nuovoBpm);
 
     if (metronomoAttivo) {
-        nextNoteTime = context.currentTime + 0.05;
+        riallineaClock();
     }
 }
 
 bpmSlider.addEventListener('input', () => {
-    aggiornaVisualeBpm(bpmSlider.value);
+    aggiornaVisualeBpm(clampBpm(bpmSlider.value));
 
     if (metronomoAttivo) {
-        nextNoteTime = context.currentTime + 0.05;
+        riallineaClock();
     }
 });
 
@@ -274,11 +298,7 @@ bpmInput.addEventListener('input', () => {
 
     if (soloCifre === '') return;
 
-    const nuovoBpm = Number(soloCifre);
-
-    if (!Number.isNaN(nuovoBpm)) {
-        bpmValue.textContent = Math.round(nuovoBpm);
-    }
+    bpmValue.textContent = clampBpm(soloCifre);
 });
 
 bpmInput.addEventListener('focus', () => {
@@ -299,7 +319,7 @@ timeSignature.addEventListener('change', () => {
     aggiornaTempo(timeSignature.value);
 
     if (metronomoAttivo) {
-        currentBeatNumber = Math.min(currentBeatNumber, battitiPerMisura);
+        riallineaClock();
     }
 });
 
@@ -309,8 +329,7 @@ accentoToggle.addEventListener('change', () => {
 
 coloriToggle.addEventListener('change', () => {
     coloriAttivi = coloriToggle.checked;
-    clearTimeout(timeoutIlluminazione);
-    metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
+    resetUIState();
 });
 
 subdivisionSelect.addEventListener('change', () => {
@@ -318,17 +337,16 @@ subdivisionSelect.addEventListener('change', () => {
 
     if (metronomoAttivo) {
         currentSubdivision = 1;
-        nextNoteTime = context.currentTime + 0.05;
+        riallineaClock();
     }
 });
 
 metronomeToggleBtn.addEventListener('click', () => {
     if (metronomoAttivo) {
         fermaMetronomo();
-        return;
+    } else {
+        avviaMetronomo();
     }
-
-    avviaMetronomo();
 });
 
 aggiornaVisualeBpm(bpm);
