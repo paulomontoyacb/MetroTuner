@@ -169,10 +169,13 @@ Utilizzo
 Nota tecnica
 Per usare correttamente microfono e AudioWorklet e consigliato avviare il progetto tramite un piccolo server locale.
 
+---
+
 Autore
 
 Creato da Paulo Montoya
 
+---
 ---
 
 MetroTuner
