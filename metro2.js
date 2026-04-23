@@ -155,10 +155,10 @@ function aggiornaUiSchedulata(when, beatNumber, subdivisionNumber) {
         if (!metronomoAttivo) return;
 
         contatore = beatNumber;
-        currentSubdivision = subdivisionNumber;
 
         contatoreVisivo.textContent = beatNumber;
-        sottoContatoreVisivo.textContent = suddivisione > 1 ? `${subdivisionNumber}/${suddivisione}` : '';
+        sottoContatoreVisivo.textContent =
+            suddivisione > 1 ? `${subdivisionNumber}/${suddivisione}` : '';
 
         if (inizioBattito) {
             triggerContatoreAnimation();
