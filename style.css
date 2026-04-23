@@ -28,7 +28,7 @@ body {
 
 .site-title {
     margin: 0;
-    font-size: clamp(1.5rem, 3.8vw, 2.55rem);
+    font-size: clamp(1.4rem, 3.5vw, 2.35rem);
     letter-spacing: 0.05em;
 }
 
@@ -70,6 +70,7 @@ body {
 .metronomo {
     transition: background-color 0.12s ease;
     gap: 18px;
+    will-change: background-color;
 }
 
 .metronomo.attivo-battere {
@@ -88,11 +89,12 @@ body {
 
 .contatore {
     margin: 8px 0 10px;
-    font-size: clamp(8rem, 24vw, 14rem);
+    font-size: clamp(7.4rem, 22vw, 13rem);
     font-weight: bold;
     line-height: 1;
     color: #b64522;
     transition: transform 0.1s ease, color 0.1s ease;
+    will-change: transform, color;
 }
 
 .sotto-contatore {
@@ -100,7 +102,7 @@ body {
 }
 
 .contatore.attivo {
-    transform: scale(1.08);
+    transform: scale(1.05);
     color: #d96a1f;
 }
 
@@ -137,6 +139,7 @@ body {
     font-size: 1rem;
     background: #fffaf1;
     color: #2a2118;
+    min-width: 140px;
 }
 
 .check-accento {
@@ -230,6 +233,18 @@ body {
 .accordatore-cents {
     font-size: 1.5rem;
     color: #6e5a45;
+}
+
+.accordatore-opzioni {
+    margin-top: 0;
+}
+
+.accordatore-opzioni .opzione-riga {
+    align-items: center;
+}
+
+.accordatore-opzioni .opzione-riga label {
+    min-width: 110px;
 }
 
 .needle-wrap {
@@ -368,7 +383,7 @@ body {
     }
 
     .site-header {
-        padding: 22px 16px 0;
+        padding: 10px 16px 0;
     }
 
     .site-heading-row {
@@ -386,5 +401,13 @@ body {
 
     .accordatore-nota {
         font-size: clamp(4rem, 22vw, 5.8rem);
+    }
+
+    .selettore-tempo {
+        min-width: 120px;
+    }
+
+    .accordatore-opzioni .opzione-riga label {
+        min-width: 0;
     }
 }
