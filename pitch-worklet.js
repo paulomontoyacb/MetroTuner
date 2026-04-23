@@ -286,4 +286,3 @@
     }
 
     registerProcessor('pitch-processor', PitchProcessor);
-}
