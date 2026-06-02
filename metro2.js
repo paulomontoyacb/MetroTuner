@@ -83,7 +83,7 @@ function aggiornaVolumeMetronomo(valore) {
 }
 
 function getMetronomeVolumeScalar() {
-    return Math.pow(metronomeVolume, 1.9);
+    return metronomeVolume;
 }
 
 function resetUIState() {
