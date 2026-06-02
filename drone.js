@@ -355,7 +355,8 @@ function updateDroneButton() {
 
 function getDroneMasterVolume() {
     const normalized = Number(droneVolumeSlider.value) / 100;
-    return Math.max(0.0001, normalized * 0.5);
+    const shaped = Math.pow(clamp(normalized, 0, 1), 1.8);
+    return Math.max(0.0001, shaped * 0.62);
 }
 
 async function ensureDroneAudio() {

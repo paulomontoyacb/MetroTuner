@@ -588,9 +588,21 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .drone-opzioni,
+    .drone-opzioni {
+        grid-template-columns: 1fr;
+    }
+
+    .drone-volume-row {
+        width: 100%;
+    }
+
     .drone-degree-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .drone-degree-option {
+        padding: 10px 8px;
     }
 
     .accordatore-nota {
@@ -640,7 +652,4 @@ body {
         font-size: clamp(3.2rem, 14vw, 4.6rem);
     }
 
-    .drone-degree-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
 }
