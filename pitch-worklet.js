@@ -1,3 +1,6 @@
+    const MIN_TAU = 2;
+    const YIN_EXTRA_TAU_SLOTS = 2;
+
     class PitchProcessor extends AudioWorkletProcessor {
         constructor(options) {
             super();
@@ -21,20 +24,21 @@
             this.mode = mode;
 
             if (mode === 'bassi') {
-                this.bufferSize = 16384;
-                this.analysisHop = 2048;
-                this.minFrequency = 20;
-                this.maxFrequency = 1500;
-                this.lowBandMaxFrequency = 220;
-                this.lowPassCutoff = 140;
-                this.fullThreshold = 0.20;
-                this.lowThreshold = 0.18;
-                this.lowResultMinClarity = 0.48;
-                this.octaveTolerance = 0.08;
-                this.attackRmsRiseThreshold = 0.0035;
-            } else {
-                this.bufferSize = 8192;
+                this.bufferSize = 12288;
                 this.analysisHop = 1024;
+                this.minFrequency = 18;
+                this.maxFrequency = 1500;
+                this.lowBandMaxFrequency = 260;
+                this.lowPassCutoff = 180;
+                this.fullThreshold = 0.23;
+                this.lowThreshold = 0.21;
+                this.lowResultMinClarity = 0.42;
+                this.octaveTolerance = 0.12;
+                this.attackRmsRiseThreshold = 0.0035;
+                this.silenceRmsGate = 0.00022;
+            } else {
+                this.bufferSize = 6144;
+                this.analysisHop = 768;
                 this.minFrequency = 25;
                 this.maxFrequency = 5000;
                 this.lowBandMaxFrequency = 140;
@@ -44,6 +48,7 @@
                 this.lowResultMinClarity = 0.52;
                 this.octaveTolerance = 0.05;
                 this.attackRmsRiseThreshold = 0.004;
+                this.silenceRmsGate = 0.00045;
             }
 
             this.buffer = new Float32Array(this.bufferSize);
@@ -110,12 +115,20 @@
 
         yin(buffer, sampleRateValue, minFrequency, maxFrequency, absoluteThreshold) {
             const halfBufferLength = Math.floor(buffer.length / 2);
-            const yinBuffer = new Float32Array(halfBufferLength);
+            const minTau = Math.max(MIN_TAU, Math.floor(sampleRateValue / maxFrequency));
+            const maxTau = Math.min(halfBufferLength - 1, Math.floor(sampleRateValue / minFrequency));
 
-            for (let tau = 1; tau < halfBufferLength; tau++) {
+            if (maxTau < minTau) {
+                return { pitch: null, clarity: 0 };
+            }
+
+            const yinBuffer = new Float32Array(maxTau + YIN_EXTRA_TAU_SLOTS);
+
+            for (let tau = 1; tau <= maxTau; tau++) {
                 let sum = 0;
+                const limit = halfBufferLength - tau;
 
-                for (let i = 0; i < halfBufferLength; i++) {
+                for (let i = 0; i < limit; i++) {
                     const delta = buffer[i] - buffer[i + tau];
                     sum += delta * delta;
                 }
@@ -126,19 +139,16 @@
             yinBuffer[0] = 1;
             let runningSum = 0;
 
-            for (let tau = 1; tau < halfBufferLength; tau++) {
+            for (let tau = 1; tau <= maxTau; tau++) {
                 runningSum += yinBuffer[tau];
                 yinBuffer[tau] = (yinBuffer[tau] * tau) / (runningSum || 1);
             }
 
-            const minTau = Math.floor(sampleRateValue / maxFrequency);
-            const maxTau = Math.min(halfBufferLength - 1, Math.floor(sampleRateValue / minFrequency));
-
             let tauEstimate = -1;
 
-            for (let tau = Math.max(2, minTau); tau < maxTau; tau++) {
+            for (let tau = minTau; tau <= maxTau; tau++) {
                 if (yinBuffer[tau] < absoluteThreshold) {
-                    while (tau + 1 < maxTau && yinBuffer[tau + 1] < yinBuffer[tau]) {
+                    while (tau + 1 <= maxTau && yinBuffer[tau + 1] < yinBuffer[tau]) {
                         tau++;
                     }
 
@@ -151,7 +161,7 @@
                 let bestTau = -1;
                 let bestValue = Infinity;
 
-                for (let tau = Math.max(2, minTau); tau < maxTau; tau++) {
+                for (let tau = minTau; tau <= maxTau; tau++) {
                     if (yinBuffer[tau] < bestValue) {
                         bestValue = yinBuffer[tau];
                         bestTau = tau;
@@ -167,7 +177,7 @@
 
             let betterTau = tauEstimate;
 
-            if (tauEstimate > 1 && tauEstimate < halfBufferLength - 1) {
+            if (tauEstimate > 1 && tauEstimate + 1 <= maxTau) {
                 const s0 = yinBuffer[tauEstimate - 1];
                 const s1 = yinBuffer[tauEstimate];
                 const s2 = yinBuffer[tauEstimate + 1];
@@ -208,12 +218,27 @@
             const nearOctave =
                 Math.abs(fullResult.pitch - lowResult.pitch * 2) / (lowResult.pitch * 2) < this.octaveTolerance;
 
+            const harmonicRatio = fullResult.pitch / lowResult.pitch;
+            const nearThirdHarmonic = Math.abs(harmonicRatio - 3) <= 0.16;
+            const nearFourthHarmonic = Math.abs(harmonicRatio - 4) <= 0.2;
+
             if (
                 nearOctave &&
                 lowResult.pitch >= 20 &&
                 lowResult.pitch <= this.lowBandMaxFrequency &&
                 lowResult.clarity >= this.lowResultMinClarity &&
                 lowResult.clarity >= fullResult.clarity * 0.8
+            ) {
+                return lowResult;
+            }
+
+            if (
+                this.mode === 'bassi' &&
+                lowResult.pitch >= 20 &&
+                lowResult.pitch <= this.lowBandMaxFrequency &&
+                lowResult.clarity >= this.lowResultMinClarity &&
+                (nearThirdHarmonic || nearFourthHarmonic) &&
+                lowResult.clarity >= fullResult.clarity * 0.7
             ) {
                 return lowResult;
             }
@@ -247,6 +272,18 @@
                 analysisBuffer.set(head, tail.length);
 
                 const rawRms = this.calculateRMS(analysisBuffer);
+
+                if (rawRms < this.silenceRmsGate) {
+                    this.prevRms = rawRms;
+                    this.port.postMessage({
+                        pitch: null,
+                        clarity: 0,
+                        rms: rawRms,
+                        isAttack: false
+                    });
+                    return true;
+                }
+
                 const prepared = this.removeDCAndNormalize(analysisBuffer);
 
                 const fullResult = this.yin(
