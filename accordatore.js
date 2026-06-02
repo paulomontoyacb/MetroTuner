@@ -18,45 +18,57 @@ const NOTE_NAMES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 
 const TUNER_MODES = {
     standard: {
         name: 'standard',
-        historySize: 4,
+        historySize: 3,
         stabilityHistorySize: 3,
-        attackHoldFramesLow: 1,
+        attackHoldFramesLow: 0,
         attackHoldFramesHigh: 0,
         uiUpdateEveryLow: 1,
         uiUpdateEveryHigh: 1,
-        minConfidenceLow: 0.60,
-        minConfidenceMid: 0.58,
-        minConfidenceHigh: 0.62,
-        minRmsLow: 0.0010,
-        minRmsMid: 0.0008,
+        minConfidenceLow: 0.56,
+        minConfidenceMid: 0.57,
+        minConfidenceHigh: 0.60,
+        minRmsLow: 0.0008,
+        minRmsMid: 0.0007,
         minRmsHigh: 0.0005,
-        lockRequirementLow: 2,
+        lockRequirementLow: 1,
         lockRequirementMid: 1,
         lockRequirementHigh: 1,
+        maxMissFrames: 8,
+        smoothAlphaLow: 0.22,
+        smoothAlphaMid: 0.28,
+        smoothAlphaHigh: 0.36,
+        smoothCentsAlpha: 0.30,
+        needleSmoothing: 0.38,
         stabilityDevLow: 4.0,
-        stabilityDevMid: 5.0,
+        stabilityDevMid: 5.2,
         stabilityDevHigh: 6.0
     },
     bassi: {
         name: 'bassi',
-        historySize: 6,
+        historySize: 5,
         stabilityHistorySize: 5,
-        attackHoldFramesLow: 2,
-        attackHoldFramesHigh: 1,
+        attackHoldFramesLow: 0,
+        attackHoldFramesHigh: 0,
         uiUpdateEveryLow: 1,
         uiUpdateEveryHigh: 1,
-        minConfidenceLow: 0.48,
-        minConfidenceMid: 0.56,
-        minConfidenceHigh: 0.64,
-        minRmsLow: 0.0008,
-        minRmsMid: 0.0008,
-        minRmsHigh: 0.0006,
-        lockRequirementLow: 3,
-        lockRequirementMid: 2,
+        minConfidenceLow: 0.38,
+        minConfidenceMid: 0.48,
+        minConfidenceHigh: 0.58,
+        minRmsLow: 0.0006,
+        minRmsMid: 0.00055,
+        minRmsHigh: 0.00045,
+        lockRequirementLow: 1,
+        lockRequirementMid: 1,
         lockRequirementHigh: 1,
-        stabilityDevLow: 3.2,
-        stabilityDevMid: 4.2,
-        stabilityDevHigh: 5.5
+        maxMissFrames: 18,
+        smoothAlphaLow: 0.16,
+        smoothAlphaMid: 0.22,
+        smoothAlphaHigh: 0.28,
+        smoothCentsAlpha: 0.22,
+        needleSmoothing: 0.30,
+        stabilityDevLow: 5.5,
+        stabilityDevMid: 6.4,
+        stabilityDevHigh: 7.0
     }
 };
 
@@ -76,6 +88,10 @@ let lastCandidateNote = null;
 let frameCounter = 0;
 let lastDisplayedFrequency = null;
 let attackHoldFrames = 0;
+let missFrames = 0;
+let smoothedFrequency = null;
+let smoothedCents = null;
+let displayedNeedleCents = null;
 let tuningA4 = 442;
 let currentMode = getSelectedModeName();
 
@@ -201,8 +217,61 @@ function getLockRequirement(freq) {
     return mode.lockRequirementHigh;
 }
 
+function getFrequencySmoothingAlpha(freq) {
+    const mode = getModeConfig();
+
+    if (freq < 180) {
+        return mode.smoothAlphaLow;
+    }
+
+    if (freq < 800) {
+        return mode.smoothAlphaMid;
+    }
+
+    return mode.smoothAlphaHigh;
+}
+
+function smoothFrequency(freq) {
+    if (!Number.isFinite(freq)) {
+        return null;
+    }
+
+    if (smoothedFrequency == null) {
+        smoothedFrequency = freq;
+        return freq;
+    }
+
+    const alpha = getFrequencySmoothingAlpha(freq);
+    smoothedFrequency += (freq - smoothedFrequency) * alpha;
+    return smoothedFrequency;
+}
+
+function smoothCentsValue(cents) {
+    if (!Number.isFinite(cents)) {
+        return null;
+    }
+
+    if (smoothedCents == null) {
+        smoothedCents = cents;
+        return cents;
+    }
+
+    const mode = getModeConfig();
+    smoothedCents += (cents - smoothedCents) * mode.smoothCentsAlpha;
+    return smoothedCents;
+}
+
 function updateNeedle(cents) {
-    const clamped = clamp(cents, -50, 50);
+    const mode = getModeConfig();
+    const target = clamp(cents, -50, 50);
+
+    if (displayedNeedleCents == null) {
+        displayedNeedleCents = target;
+    } else {
+        displayedNeedleCents += (target - displayedNeedleCents) * mode.needleSmoothing;
+    }
+
+    const clamped = clamp(displayedNeedleCents, -50, 50);
     const left = ((clamped + 50) / 100) * 100;
     tunerNeedleEl.style.left = `${left}%`;
 }
@@ -228,6 +297,10 @@ function resetTrackingState() {
     lastCandidateNote = null;
     frameCounter = 0;
     attackHoldFrames = 0;
+    missFrames = 0;
+    smoothedFrequency = null;
+    smoothedCents = null;
+    displayedNeedleCents = null;
 }
 
 function resetTunerState() {
@@ -254,6 +327,30 @@ function resetUI(message = 'Nessun pitch affidabile.') {
     tunerCentsEl.textContent = '0.0 cent';
     updateNeedle(0);
     tunerStatusEl.textContent = message;
+}
+
+function handleUnreliableFrame(message, clarity = null, rms = null, rangeName = '--') {
+    const mode = getModeConfig();
+    missFrames += 1;
+
+    if (clarity != null && Number.isFinite(clarity)) {
+        tunerClarityEl.textContent = clarity.toFixed(3);
+    }
+
+    if (rms != null && Number.isFinite(rms)) {
+        tunerLevelEl.textContent = rms.toFixed(4);
+    }
+
+    tunerRangeEl.textContent = rangeName;
+
+    if (displayedNote !== '--' && missFrames <= mode.maxMissFrames) {
+        tunerLockStateEl.textContent = `Mantieni ${missFrames}/${mode.maxMissFrames}`;
+        tunerStatusEl.textContent = `${message} Mantengo ultimo aggancio.`;
+        return;
+    }
+
+    resetTrackingState();
+    resetUI(message);
 }
 
 function commitDisplay(freq, noteInfo, clarity, rms, rangeName, lockState, displayedCents) {
@@ -306,12 +403,12 @@ function isPitchStable(freq) {
 
 function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
     if (!pitch || !Number.isFinite(pitch)) {
-        resetUI('Pitch non valido.');
+        handleUnreliableFrame('Pitch non valido.', clarity, rms);
         return;
     }
 
     if (pitch < 20 || pitch > 6000) {
-        resetUI('Pitch fuori range.');
+        handleUnreliableFrame('Pitch fuori range.', clarity, rms);
         return;
     }
 
@@ -319,14 +416,16 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
     const mode = getModeConfig();
 
     if (clarity < autoRange.minConfidence) {
-        resetUI(`Pitch incerto (${clarity.toFixed(3)}).`);
+        handleUnreliableFrame(`Pitch incerto (${clarity.toFixed(3)}).`, clarity, rms, autoRange.name);
         return;
     }
 
     if (rms < autoRange.minRms) {
-        resetUI('Segnale troppo debole.');
+        handleUnreliableFrame('Segnale troppo debole.', clarity, rms, autoRange.name);
         return;
     }
+
+    missFrames = 0;
 
     if (isAttack) {
         attackHoldFrames = pitch < 180 ? mode.attackHoldFramesLow : mode.attackHoldFramesHigh;
@@ -350,17 +449,25 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
         return;
     }
 
-    const noteInfo = frequencyToNote(stableFreq);
+    const filteredFreq = smoothFrequency(stableFreq);
 
-    pushLimited(recentCents, noteInfo.cents, mode.historySize);
-    const stableCents = median(recentCents) ?? noteInfo.cents;
-
-    if (displayedNote === '--' && recentFrequencies.length >= 2) {
-        commitDisplay(stableFreq, noteInfo, clarity, rms, autoRange.name, 'aggancio', stableCents);
+    if (!filteredFreq) {
+        resetUI('In attesa di stabilizzazione.');
         return;
     }
 
-    if (!isPitchStable(stableFreq)) {
+    const noteInfo = frequencyToNote(filteredFreq);
+
+    pushLimited(recentCents, noteInfo.cents, mode.historySize);
+    const medianCents = median(recentCents) ?? noteInfo.cents;
+    const stableCents = smoothCentsValue(medianCents) ?? medianCents;
+
+    if (displayedNote === '--' && recentFrequencies.length >= 2) {
+        commitDisplay(filteredFreq, noteInfo, clarity, rms, autoRange.name, 'aggancio', stableCents);
+        return;
+    }
+
+    if (!isPitchStable(filteredFreq)) {
         tunerStatusEl.textContent = 'Segnale presente, pitch ancora instabile...';
         tunerClarityEl.textContent = clarity.toFixed(3);
         tunerLevelEl.textContent = rms.toFixed(4);
@@ -376,14 +483,14 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
         consecutiveSameNote = 1;
     }
 
-    const requiredLocks = getLockRequirement(stableFreq);
+    const requiredLocks = getLockRequirement(filteredFreq);
     const isLocked = consecutiveSameNote >= requiredLocks;
 
     frameCounter += 1;
     const canRefreshUI = frameCounter % autoRange.uiUpdateEvery === 0;
 
     if (displayedNote === '--') {
-        commitDisplay(stableFreq, noteInfo, clarity, rms, autoRange.name, 'acquisizione', stableCents);
+        commitDisplay(filteredFreq, noteInfo, clarity, rms, autoRange.name, 'acquisizione', stableCents);
         return;
     }
 
@@ -400,7 +507,7 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
 
     if (canRefreshUI) {
         commitDisplay(
-            stableFreq,
+            filteredFreq,
             noteInfo,
             clarity,
             rms,
@@ -440,10 +547,7 @@ async function startTuner() {
                 video: false
             });
 
-            tunerAudioContext = new AudioContext({
-                latencyHint: 'interactive',
-                sampleRate: 44100
-            });
+            tunerAudioContext = new AudioContext({ latencyHint: 'interactive' });
 
             await tunerAudioContext.audioWorklet.addModule('./pitch-worklet.js');
 
