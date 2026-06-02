@@ -25,17 +25,17 @@
 
             if (mode === 'bassi') {
                 this.bufferSize = 12288;
-                this.analysisHop = 1536;
-                this.minFrequency = 20;
+                this.analysisHop = 1024;
+                this.minFrequency = 18;
                 this.maxFrequency = 1500;
-                this.lowBandMaxFrequency = 220;
-                this.lowPassCutoff = 140;
-                this.fullThreshold = 0.20;
-                this.lowThreshold = 0.18;
-                this.lowResultMinClarity = 0.48;
-                this.octaveTolerance = 0.08;
+                this.lowBandMaxFrequency = 260;
+                this.lowPassCutoff = 180;
+                this.fullThreshold = 0.23;
+                this.lowThreshold = 0.21;
+                this.lowResultMinClarity = 0.42;
+                this.octaveTolerance = 0.12;
                 this.attackRmsRiseThreshold = 0.0035;
-                this.silenceRmsGate = 0.00035;
+                this.silenceRmsGate = 0.00022;
             } else {
                 this.bufferSize = 6144;
                 this.analysisHop = 768;
@@ -218,12 +218,27 @@
             const nearOctave =
                 Math.abs(fullResult.pitch - lowResult.pitch * 2) / (lowResult.pitch * 2) < this.octaveTolerance;
 
+            const harmonicRatio = fullResult.pitch / lowResult.pitch;
+            const nearThirdHarmonic = Math.abs(harmonicRatio - 3) <= 0.16;
+            const nearFourthHarmonic = Math.abs(harmonicRatio - 4) <= 0.2;
+
             if (
                 nearOctave &&
                 lowResult.pitch >= 20 &&
                 lowResult.pitch <= this.lowBandMaxFrequency &&
                 lowResult.clarity >= this.lowResultMinClarity &&
                 lowResult.clarity >= fullResult.clarity * 0.8
+            ) {
+                return lowResult;
+            }
+
+            if (
+                this.mode === 'bassi' &&
+                lowResult.pitch >= 20 &&
+                lowResult.pitch <= this.lowBandMaxFrequency &&
+                lowResult.clarity >= this.lowResultMinClarity &&
+                (nearThirdHarmonic || nearFourthHarmonic) &&
+                lowResult.clarity >= fullResult.clarity * 0.7
             ) {
                 return lowResult;
             }
