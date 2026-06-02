@@ -132,11 +132,12 @@ body {
     background: #fffaf1;
     color: #2a2118;
     min-width: 140px;
+    min-height: 44px;
 }
 
 .check-accento {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     accent-color: #b64522;
 }
 
@@ -160,12 +161,13 @@ body {
     padding: 10px 12px;
     border: 2px solid #b9aa95;
     border-radius: 12px;
-    font-size: 1.1rem;
+    font-size: max(16px, 1.1rem);
     text-align: center;
     background: #fffaf1;
     flex-shrink: 0;
     appearance: textfield;
     -moz-appearance: textfield;
+    min-height: 44px;
 }
 
 .tempo-input::-webkit-outer-spin-button,
@@ -178,6 +180,7 @@ body {
     width: 100%;
     accent-color: #b64522;
     flex: 1;
+    min-height: 32px;
 }
 
 .controlli,
@@ -202,6 +205,13 @@ body {
     background: #7c3f17;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+}
+
+.controlli input[type='button']:active,
+.controlli button:active,
+.accordatore-controlli button:active,
+.drone-clear-btn:active {
+    transform: scale(0.98);
 }
 
 .accordatore,
@@ -288,6 +298,8 @@ body {
     font-size: 0.9rem;
     font-weight: bold;
     cursor: pointer;
+    min-height: 44px;
+    touch-action: manipulation;
 }
 
 .drone-degree-grid {
@@ -314,6 +326,8 @@ body {
     justify-content: center;
     gap: 6px;
     cursor: pointer;
+    min-height: 44px;
+    touch-action: manipulation;
 }
 
 .drone-degree-text {
@@ -575,6 +589,18 @@ body {
         box-sizing: border-box;
     }
 
+    .controlli,
+    .accordatore-controlli {
+        width: 100%;
+    }
+
+    .controlli input[type='button'],
+    .controlli button,
+    .accordatore-controlli button {
+        width: 100%;
+        font-size: 1.05rem;
+    }
+
     .needle-scale {
         height: 24px;
     }
@@ -622,6 +648,12 @@ body {
     .app-layout {
         padding: 6px 10px 12px;
         gap: 12px;
+    }
+
+    .metronomo,
+    .accordatore,
+    .drone {
+        padding: 14px 12px;
     }
 
     .panel-title {
