@@ -18,45 +18,47 @@ const NOTE_NAMES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 
 const TUNER_MODES = {
     standard: {
         name: 'standard',
-        historySize: 4,
+        historySize: 3,
         stabilityHistorySize: 3,
-        attackHoldFramesLow: 1,
+        attackHoldFramesLow: 0,
         attackHoldFramesHigh: 0,
         uiUpdateEveryLow: 1,
         uiUpdateEveryHigh: 1,
-        minConfidenceLow: 0.60,
-        minConfidenceMid: 0.58,
-        minConfidenceHigh: 0.62,
-        minRmsLow: 0.0010,
-        minRmsMid: 0.0008,
+        minConfidenceLow: 0.56,
+        minConfidenceMid: 0.55,
+        minConfidenceHigh: 0.60,
+        minRmsLow: 0.0008,
+        minRmsMid: 0.0007,
         minRmsHigh: 0.0005,
-        lockRequirementLow: 2,
+        lockRequirementLow: 1,
         lockRequirementMid: 1,
         lockRequirementHigh: 1,
+        maxMissFrames: 8,
         stabilityDevLow: 4.0,
-        stabilityDevMid: 5.0,
+        stabilityDevMid: 5.2,
         stabilityDevHigh: 6.0
     },
     bassi: {
         name: 'bassi',
-        historySize: 6,
-        stabilityHistorySize: 5,
-        attackHoldFramesLow: 2,
-        attackHoldFramesHigh: 1,
+        historySize: 4,
+        stabilityHistorySize: 4,
+        attackHoldFramesLow: 1,
+        attackHoldFramesHigh: 0,
         uiUpdateEveryLow: 1,
         uiUpdateEveryHigh: 1,
-        minConfidenceLow: 0.48,
-        minConfidenceMid: 0.56,
-        minConfidenceHigh: 0.64,
+        minConfidenceLow: 0.45,
+        minConfidenceMid: 0.54,
+        minConfidenceHigh: 0.62,
         minRmsLow: 0.0008,
-        minRmsMid: 0.0008,
+        minRmsMid: 0.0007,
         minRmsHigh: 0.0006,
-        lockRequirementLow: 3,
-        lockRequirementMid: 2,
+        lockRequirementLow: 2,
+        lockRequirementMid: 1,
         lockRequirementHigh: 1,
-        stabilityDevLow: 3.2,
-        stabilityDevMid: 4.2,
-        stabilityDevHigh: 5.5
+        maxMissFrames: 12,
+        stabilityDevLow: 3.5,
+        stabilityDevMid: 4.6,
+        stabilityDevHigh: 6.2
     }
 };
 
@@ -76,6 +78,7 @@ let lastCandidateNote = null;
 let frameCounter = 0;
 let lastDisplayedFrequency = null;
 let attackHoldFrames = 0;
+let missFrames = 0;
 let tuningA4 = 442;
 let currentMode = getSelectedModeName();
 
@@ -228,6 +231,7 @@ function resetTrackingState() {
     lastCandidateNote = null;
     frameCounter = 0;
     attackHoldFrames = 0;
+    missFrames = 0;
 }
 
 function resetTunerState() {
@@ -254,6 +258,30 @@ function resetUI(message = 'Nessun pitch affidabile.') {
     tunerCentsEl.textContent = '0.0 cent';
     updateNeedle(0);
     tunerStatusEl.textContent = message;
+}
+
+function handleUnreliableFrame(message, clarity = null, rms = null, rangeName = '--') {
+    const mode = getModeConfig();
+    missFrames += 1;
+
+    if (clarity != null && Number.isFinite(clarity)) {
+        tunerClarityEl.textContent = clarity.toFixed(3);
+    }
+
+    if (rms != null && Number.isFinite(rms)) {
+        tunerLevelEl.textContent = rms.toFixed(4);
+    }
+
+    tunerRangeEl.textContent = rangeName;
+
+    if (displayedNote !== '--' && missFrames <= mode.maxMissFrames) {
+        tunerLockStateEl.textContent = `hold ${missFrames}/${mode.maxMissFrames}`;
+        tunerStatusEl.textContent = `${message} Mantengo ultimo aggancio.`;
+        return;
+    }
+
+    resetTrackingState();
+    resetUI(message);
 }
 
 function commitDisplay(freq, noteInfo, clarity, rms, rangeName, lockState, displayedCents) {
@@ -306,12 +334,12 @@ function isPitchStable(freq) {
 
 function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
     if (!pitch || !Number.isFinite(pitch)) {
-        resetUI('Pitch non valido.');
+        handleUnreliableFrame('Pitch non valido.', clarity, rms);
         return;
     }
 
     if (pitch < 20 || pitch > 6000) {
-        resetUI('Pitch fuori range.');
+        handleUnreliableFrame('Pitch fuori range.', clarity, rms);
         return;
     }
 
@@ -319,14 +347,16 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
     const mode = getModeConfig();
 
     if (clarity < autoRange.minConfidence) {
-        resetUI(`Pitch incerto (${clarity.toFixed(3)}).`);
+        handleUnreliableFrame(`Pitch incerto (${clarity.toFixed(3)}).`, clarity, rms, autoRange.name);
         return;
     }
 
     if (rms < autoRange.minRms) {
-        resetUI('Segnale troppo debole.');
+        handleUnreliableFrame('Segnale troppo debole.', clarity, rms, autoRange.name);
         return;
     }
+
+    missFrames = 0;
 
     if (isAttack) {
         attackHoldFrames = pitch < 180 ? mode.attackHoldFramesLow : mode.attackHoldFramesHigh;
@@ -440,10 +470,7 @@ async function startTuner() {
                 video: false
             });
 
-            tunerAudioContext = new AudioContext({
-                latencyHint: 'interactive',
-                sampleRate: 44100
-            });
+            tunerAudioContext = new AudioContext({ latencyHint: 'interactive' });
 
             await tunerAudioContext.audioWorklet.addModule('./pitch-worklet.js');
 
