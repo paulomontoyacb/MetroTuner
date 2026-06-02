@@ -149,7 +149,7 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     const durataSuono = Math.min(0.09, Math.max(0.035, durataStep * 0.45));
     const stopTime = when + durataSuono;
 
-    oscillatore.type = 'sine';
+    oscillatore.type = 'triangle';
     oscillatore.frequency.setValueAtTime(frequenza, when);
 
     gainNode.gain.setValueAtTime(0.0001, when);
