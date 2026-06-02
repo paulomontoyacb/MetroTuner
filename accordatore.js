@@ -344,7 +344,7 @@ function handleUnreliableFrame(message, clarity = null, rms = null, rangeName = 
     tunerRangeEl.textContent = rangeName;
 
     if (displayedNote !== '--' && missFrames <= mode.maxMissFrames) {
-        tunerLockStateEl.textContent = `mantieni ${missFrames}/${mode.maxMissFrames}`;
+        tunerLockStateEl.textContent = `Mantieni ${missFrames}/${mode.maxMissFrames}`;
         tunerStatusEl.textContent = `${message} Mantengo ultimo aggancio.`;
         return;
     }

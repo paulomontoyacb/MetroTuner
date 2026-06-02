@@ -24,8 +24,8 @@
             this.mode = mode;
 
             if (mode === 'bassi') {
-                this.bufferSize = 8192;
-                this.analysisHop = 1024;
+                this.bufferSize = 12288;
+                this.analysisHop = 1536;
                 this.minFrequency = 20;
                 this.maxFrequency = 1500;
                 this.lowBandMaxFrequency = 220;
@@ -37,8 +37,8 @@
                 this.attackRmsRiseThreshold = 0.0035;
                 this.silenceRmsGate = 0.00035;
             } else {
-                this.bufferSize = 4096;
-                this.analysisHop = 512;
+                this.bufferSize = 6144;
+                this.analysisHop = 768;
                 this.minFrequency = 25;
                 this.maxFrequency = 5000;
                 this.lowBandMaxFrequency = 140;
