@@ -1,3 +1,6 @@
+    const MIN_TAU = 2;
+    const YIN_EXTRA_TAU_SLOTS = 2;
+
     class PitchProcessor extends AudioWorkletProcessor {
         constructor(options) {
             super();
@@ -112,14 +115,14 @@
 
         yin(buffer, sampleRateValue, minFrequency, maxFrequency, absoluteThreshold) {
             const halfBufferLength = Math.floor(buffer.length / 2);
-            const minTau = Math.max(2, Math.floor(sampleRateValue / maxFrequency));
+            const minTau = Math.max(MIN_TAU, Math.floor(sampleRateValue / maxFrequency));
             const maxTau = Math.min(halfBufferLength - 1, Math.floor(sampleRateValue / minFrequency));
 
-            if (maxTau <= minTau) {
+            if (maxTau < minTau) {
                 return { pitch: null, clarity: 0 };
             }
 
-            const yinBuffer = new Float32Array(maxTau + 2);
+            const yinBuffer = new Float32Array(maxTau + YIN_EXTRA_TAU_SLOTS);
 
             for (let tau = 1; tau <= maxTau; tau++) {
                 let sum = 0;
@@ -174,7 +177,7 @@
 
             let betterTau = tauEstimate;
 
-            if (tauEstimate > 1 && tauEstimate < maxTau) {
+            if (tauEstimate > 1 && tauEstimate + 1 <= maxTau) {
                 const s0 = yinBuffer[tauEstimate - 1];
                 const s1 = yinBuffer[tauEstimate];
                 const s2 = yinBuffer[tauEstimate + 1];

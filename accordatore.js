@@ -25,7 +25,7 @@ const TUNER_MODES = {
         uiUpdateEveryLow: 1,
         uiUpdateEveryHigh: 1,
         minConfidenceLow: 0.56,
-        minConfidenceMid: 0.55,
+        minConfidenceMid: 0.57,
         minConfidenceHigh: 0.60,
         minRmsLow: 0.0008,
         minRmsMid: 0.0007,
@@ -275,7 +275,7 @@ function handleUnreliableFrame(message, clarity = null, rms = null, rangeName = 
     tunerRangeEl.textContent = rangeName;
 
     if (displayedNote !== '--' && missFrames <= mode.maxMissFrames) {
-        tunerLockStateEl.textContent = `hold ${missFrames}/${mode.maxMissFrames}`;
+        tunerLockStateEl.textContent = `mantieni ${missFrames}/${mode.maxMissFrames}`;
         tunerStatusEl.textContent = `${message} Mantengo ultimo aggancio.`;
         return;
     }
