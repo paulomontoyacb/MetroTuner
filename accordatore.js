@@ -34,6 +34,11 @@ const TUNER_MODES = {
         lockRequirementMid: 1,
         lockRequirementHigh: 1,
         maxMissFrames: 8,
+        smoothAlphaLow: 0.22,
+        smoothAlphaMid: 0.28,
+        smoothAlphaHigh: 0.36,
+        smoothCentsAlpha: 0.30,
+        needleSmoothing: 0.38,
         stabilityDevLow: 4.0,
         stabilityDevMid: 5.2,
         stabilityDevHigh: 6.0
@@ -56,6 +61,11 @@ const TUNER_MODES = {
         lockRequirementMid: 1,
         lockRequirementHigh: 1,
         maxMissFrames: 12,
+        smoothAlphaLow: 0.18,
+        smoothAlphaMid: 0.24,
+        smoothAlphaHigh: 0.30,
+        smoothCentsAlpha: 0.24,
+        needleSmoothing: 0.32,
         stabilityDevLow: 3.5,
         stabilityDevMid: 4.6,
         stabilityDevHigh: 6.2
@@ -79,6 +89,9 @@ let frameCounter = 0;
 let lastDisplayedFrequency = null;
 let attackHoldFrames = 0;
 let missFrames = 0;
+let smoothedFrequency = null;
+let smoothedCents = null;
+let displayedNeedleCents = null;
 let tuningA4 = 442;
 let currentMode = getSelectedModeName();
 
@@ -204,8 +217,61 @@ function getLockRequirement(freq) {
     return mode.lockRequirementHigh;
 }
 
+function getFrequencySmoothingAlpha(freq) {
+    const mode = getModeConfig();
+
+    if (freq < 180) {
+        return mode.smoothAlphaLow;
+    }
+
+    if (freq < 800) {
+        return mode.smoothAlphaMid;
+    }
+
+    return mode.smoothAlphaHigh;
+}
+
+function smoothFrequency(freq) {
+    if (!Number.isFinite(freq)) {
+        return null;
+    }
+
+    if (smoothedFrequency == null) {
+        smoothedFrequency = freq;
+        return freq;
+    }
+
+    const alpha = getFrequencySmoothingAlpha(freq);
+    smoothedFrequency += (freq - smoothedFrequency) * alpha;
+    return smoothedFrequency;
+}
+
+function smoothCentsValue(cents) {
+    if (!Number.isFinite(cents)) {
+        return null;
+    }
+
+    if (smoothedCents == null) {
+        smoothedCents = cents;
+        return cents;
+    }
+
+    const mode = getModeConfig();
+    smoothedCents += (cents - smoothedCents) * mode.smoothCentsAlpha;
+    return smoothedCents;
+}
+
 function updateNeedle(cents) {
-    const clamped = clamp(cents, -50, 50);
+    const mode = getModeConfig();
+    const target = clamp(cents, -50, 50);
+
+    if (displayedNeedleCents == null) {
+        displayedNeedleCents = target;
+    } else {
+        displayedNeedleCents += (target - displayedNeedleCents) * mode.needleSmoothing;
+    }
+
+    const clamped = clamp(displayedNeedleCents, -50, 50);
     const left = ((clamped + 50) / 100) * 100;
     tunerNeedleEl.style.left = `${left}%`;
 }
@@ -232,6 +298,9 @@ function resetTrackingState() {
     frameCounter = 0;
     attackHoldFrames = 0;
     missFrames = 0;
+    smoothedFrequency = null;
+    smoothedCents = null;
+    displayedNeedleCents = null;
 }
 
 function resetTunerState() {
@@ -380,17 +449,25 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
         return;
     }
 
-    const noteInfo = frequencyToNote(stableFreq);
+    const filteredFreq = smoothFrequency(stableFreq);
 
-    pushLimited(recentCents, noteInfo.cents, mode.historySize);
-    const stableCents = median(recentCents) ?? noteInfo.cents;
-
-    if (displayedNote === '--' && recentFrequencies.length >= 2) {
-        commitDisplay(stableFreq, noteInfo, clarity, rms, autoRange.name, 'aggancio', stableCents);
+    if (!filteredFreq) {
+        resetUI('In attesa di stabilizzazione.');
         return;
     }
 
-    if (!isPitchStable(stableFreq)) {
+    const noteInfo = frequencyToNote(filteredFreq);
+
+    pushLimited(recentCents, noteInfo.cents, mode.historySize);
+    const medianCents = median(recentCents) ?? noteInfo.cents;
+    const stableCents = smoothCentsValue(medianCents) ?? medianCents;
+
+    if (displayedNote === '--' && recentFrequencies.length >= 2) {
+        commitDisplay(filteredFreq, noteInfo, clarity, rms, autoRange.name, 'aggancio', stableCents);
+        return;
+    }
+
+    if (!isPitchStable(filteredFreq)) {
         tunerStatusEl.textContent = 'Segnale presente, pitch ancora instabile...';
         tunerClarityEl.textContent = clarity.toFixed(3);
         tunerLevelEl.textContent = rms.toFixed(4);
@@ -406,14 +483,14 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
         consecutiveSameNote = 1;
     }
 
-    const requiredLocks = getLockRequirement(stableFreq);
+    const requiredLocks = getLockRequirement(filteredFreq);
     const isLocked = consecutiveSameNote >= requiredLocks;
 
     frameCounter += 1;
     const canRefreshUI = frameCounter % autoRange.uiUpdateEvery === 0;
 
     if (displayedNote === '--') {
-        commitDisplay(stableFreq, noteInfo, clarity, rms, autoRange.name, 'acquisizione', stableCents);
+        commitDisplay(filteredFreq, noteInfo, clarity, rms, autoRange.name, 'acquisizione', stableCents);
         return;
     }
 
@@ -430,7 +507,7 @@ function processPitchEstimate(pitch, clarity, rms, isAttack = false) {
 
     if (canRefreshUI) {
         commitDisplay(
-            stableFreq,
+            filteredFreq,
             noteInfo,
             clarity,
             rms,
