@@ -82,6 +82,10 @@ function aggiornaVolumeMetronomo(valore) {
     metronomeVolumeValue.textContent = `${Math.round(normalized * 100)}%`;
 }
 
+function getMetronomeVolumeScalar() {
+    return Math.pow(metronomeVolume, 1.9);
+}
+
 function resetUIState() {
     contatoreVisivo.classList.remove('attivo');
     metronomoBox.classList.remove('attivo-battere', 'attivo-tempo');
@@ -149,7 +153,10 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     oscillatore.frequency.setValueAtTime(frequenza, when);
 
     gainNode.gain.setValueAtTime(0.0001, when);
-    gainNode.gain.exponentialRampToValueAtTime(Math.max(0.0001, volumePicco * metronomeVolume), when + attack);
+    gainNode.gain.exponentialRampToValueAtTime(
+        Math.max(0.0001, volumePicco * getMetronomeVolumeScalar()),
+        when + attack
+    );
     gainNode.gain.exponentialRampToValueAtTime(0.0001, stopTime);
 
     oscillatore.connect(gainNode);
