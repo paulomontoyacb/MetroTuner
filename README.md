@@ -1,8 +1,8 @@
-Pulsar
+MetroTuner
 
 Italiano
 
-Pulsar e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
+MetroTuner e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
 Unisce metronomo, accordatore e drone in una sola interfaccia, cosi da poter lavorare su esercizi tecnici, scale, arpeggi e studio di brani senza dover usare strumenti separati.
 
 Obiettivo
@@ -21,7 +21,7 @@ Metronomo
 Il metronomo include:
 
 - selezione BPM con slider e input numerico
-- firme ritmiche da "2/4" a "7/4"
+- firme ritmiche: numeratore da 1 a 24, denominatore 2, 4, 8, 16
 - suddivisioni:
   - quarti
   - ottavi
@@ -74,12 +74,12 @@ Caratteristiche:
 - volume dedicato
 - suono continuo caldo basato su **triangle wave**
 - accordatura coerente con quella dell'accordatore
-- pulsante "Cancella" per azzerare rapidamente le note aggiuntive
+- pulsante "Cancella tutto" per azzerare rapidamente le note aggiuntive
 
 Default del drone:
 
 - nota base: "Do"
-- ottava: "2"
+- ottava: "3"
 - scala: "Maggiore"
 
 Scale disponibili nel drone
@@ -178,11 +178,11 @@ Creato da Paulo Montoya
 ---
 ---
 
-Pulsar
+MetroTuner
 
 English
 
-Pulsar is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
+MetroTuner is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
 It combines metronome, tuner, and drone into one interface, allowing musicians to work on technical exercises, scales, arpeggios, and repertoire study without needing separate tools.
 
 Goal
@@ -201,7 +201,7 @@ Metronome
 The metronome includes:
 
 - BPM selection with slider and numeric input
-- time signatures from "2/4" to "7/4"
+- time signatures: numerator from 1 to 24, denominator 2, 4, 8, 16
 - subdivisions:
   - quarter notes
   - eighth notes
@@ -251,12 +251,12 @@ Features:
 - dedicated volume
 - warm continuous sound based on **triangle wave**
 - tuning reference consistent with the tuner
-- "Cancella" button to quickly clear added notes
+- "Clear all" button to quickly clear added notes
 
 Drone defaults:
 
 - root note: "C"
-- octave: "2"
+- octave: "3"
 - scale: "Major"
 
 Available drone scales
