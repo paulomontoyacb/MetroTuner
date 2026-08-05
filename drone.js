@@ -10,7 +10,7 @@ const droneOctaveDownBtn = document.getElementById('droneOctaveDown');
 const droneOctaveUpBtn = document.getElementById('droneOctaveUp');
 const droneOctaveDisplayEl = document.getElementById('droneOctaveDisplay');
 
-const DRONE_NOTE_LABELS = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
+const DRONE_NOTE_LABELS = ['Do', 'Do#/Reb', 'Re', 'Re#/Mib', 'Mi', 'Fa', 'Fa#/Solb', 'Sol', 'Sol#/Lab', 'La', 'La#/Sib', 'Si'];
 const DRONE_NOTE_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const DRONE_IS_SHARP = [false, true, false, true, false, false, true, false, true, false, true, false];
 
@@ -120,7 +120,7 @@ function buildDroneLayer() {
         const voiceGain = droneAudioContext.createGain();
         const normalizedGain = (rawWeights[index] / totalWeight) * 0.92;
 
-        oscillator.type = 'triangle';
+        oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(entry.frequency, now);
         voiceGain.gain.setValueAtTime(normalizedGain, now);
         oscillator.connect(voiceGain);
@@ -226,14 +226,19 @@ function renderCircleButtons() {
         const isSharp = DRONE_IS_SHARP[index];
         const label = DRONE_NOTE_LABELS[index];
 
+        const labelParts = label.split('/');
+        const labelMain = labelParts[0];
+        const labelAlt = labelParts[1] || null;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'drone-circle-btn' +
-            (isSharp ? ' drone-circle-btn--sharp' : '') +
             (isActive ? ' drone-circle-btn--active' : '');
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         btn.setAttribute('aria-label', `${label} ottava ${currentOctave}`);
-        btn.innerHTML = `<span class="dcb-name">${label}</span>`;
+        btn.innerHTML = labelAlt
+            ? `<span class="dcb-name">${labelMain}<br><span class="dcb-alt">${labelAlt}</span></span>`
+            : `<span class="dcb-name">${labelMain}</span>`;
         btn.style.left = `${x}%`;
         btn.style.top = `${y}%`;
 
