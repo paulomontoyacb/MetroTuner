@@ -237,7 +237,7 @@ function renderCircleButtons() {
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         btn.setAttribute('aria-label', `${label} ottava ${currentOctave}`);
         btn.innerHTML = labelAlt
-            ? `<span class="dcb-name">${labelMain}<br><span class="dcb-alt">${labelAlt}</span></span>`
+            ? `<span class="dcb-name">${labelMain}<span class="dcb-alt">${labelAlt}</span></span>`
             : `<span class="dcb-name">${labelMain}</span>`;
         btn.style.left = `${x}%`;
         btn.style.top = `${y}%`;
