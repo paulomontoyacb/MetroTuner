@@ -3,6 +3,7 @@ const context = new AudioContext();
 let contatore = 1;
 let bpm = 60;
 let battitiPerMisura = 4;
+let denominatore = 4; // 4 = quarter note, 8 = eighth note
 let suddivisione = 1;
 
 let battereAttivo = true;
@@ -10,6 +11,9 @@ let coloriAttivi = true;
 let metronomoAttivo = false;
 let avvioCorrente = 0;
 let metronomeVolume = 0.55;
+
+// beatMuted[i] = true means beat i+1 is silenced (0-indexed)
+let beatMuted = [];
 
 let schedulerInterval = null;
 let uiTimeouts = [];
@@ -37,6 +41,7 @@ const coloriToggle = document.getElementById('coloriToggle');
 const subdivisionSelect = document.getElementById('subdivisionSelect');
 const metronomeVolumeSlider = document.getElementById('metronomeVolume');
 const metronomeVolumeValue = document.getElementById('metronomeVolumeValue');
+const beatMuteGrid = document.getElementById('beatMuteGrid');
 
 function aggiornaVisualeBpm(nuovoBpm) {
     bpm = Number(nuovoBpm);
@@ -45,9 +50,45 @@ function aggiornaVisualeBpm(nuovoBpm) {
     bpmValue.textContent = bpm;
 }
 
-function aggiornaTempo(nuovoTempo) {
-    battitiPerMisura = Number(nuovoTempo);
-    timeSignature.value = battitiPerMisura;
+function parseTimeSignature(value) {
+    const parts = value.split('/');
+    return { beats: Number(parts[0]), denom: Number(parts[1] || 4) };
+}
+
+function getSecondsPerStep() {
+    // For /4: step = quarter note = 60/bpm
+    // For /8: step = eighth note = 60/bpm/2
+    const baseStep = 60 / bpm;
+    const denomFactor = denominatore === 8 ? 0.5 : 1;
+    return (baseStep * denomFactor) / suddivisione;
+}
+
+function renderBeatMuteGrid() {
+    beatMuteGrid.innerHTML = '';
+
+    for (let i = 0; i < battitiPerMisura; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'beat-mute-btn' + (beatMuted[i] ? ' beat-muted' : '');
+        btn.textContent = i + 1;
+        btn.setAttribute('aria-pressed', beatMuted[i] ? 'true' : 'false');
+        btn.dataset.beat = i;
+
+        btn.addEventListener('click', () => {
+            beatMuted[i] = !beatMuted[i];
+            btn.classList.toggle('beat-muted', beatMuted[i]);
+            btn.setAttribute('aria-pressed', beatMuted[i] ? 'true' : 'false');
+        });
+
+        beatMuteGrid.appendChild(btn);
+    }
+}
+
+function aggiornaTempo(value) {
+    const parsed = parseTimeSignature(value);
+    battitiPerMisura = parsed.beats;
+    denominatore = parsed.denom;
+    timeSignature.value = value;
 
     if (contatore > battitiPerMisura) {
         contatore = 1;
@@ -57,6 +98,9 @@ function aggiornaTempo(nuovoTempo) {
         currentBeatNumber = 1;
     }
 
+    // Reset beat muted array to match new beat count (preserve existing, fill new with false)
+    beatMuted = Array.from({ length: battitiPerMisura }, (_, i) => beatMuted[i] || false);
+    renderBeatMuteGrid();
     aggiornaDisplayConteggio();
 }
 
@@ -144,7 +188,7 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     const oscillatore = context.createOscillator();
     const gainNode = context.createGain();
 
-    const durataStep = 60 / (bpm * suddivisione);
+    const durataStep = getSecondsPerStep();
     const attack = 0.003;
     const durataSuono = Math.min(0.09, Math.max(0.035, durataStep * 0.45));
     const stopTime = when + durataSuono;
@@ -243,20 +287,23 @@ function aggiornaUiSchedulata(when, beatNumber, subdivisionNumber) {
 
 function scheduleBeat(when, beatNumber, subdivisionNumber) {
     const inizioBattito = subdivisionNumber === 1;
+    const isMuted = inizioBattito && beatMuted[beatNumber - 1];
 
-    if (inizioBattito && battereAttivo && beatNumber === 1) {
-        riproduciColpoSchedulato(1760, 0.98, when);
-    } else if (inizioBattito) {
-        riproduciColpoSchedulato(880, 0.82, when);
-    } else {
-        riproduciColpoSchedulato(660, 0.54, when);
+    if (!isMuted) {
+        if (inizioBattito && battereAttivo && beatNumber === 1) {
+            riproduciColpoSchedulato(1760, 0.98, when);
+        } else if (inizioBattito) {
+            riproduciColpoSchedulato(880, 0.82, when);
+        } else {
+            riproduciColpoSchedulato(660, 0.54, when);
+        }
     }
 
     aggiornaUiSchedulata(when, beatNumber, subdivisionNumber);
 }
 
 function advanceNote() {
-    const secondsPerStep = 60 / (bpm * suddivisione);
+    const secondsPerStep = getSecondsPerStep();
     nextNoteTime += secondsPerStep;
 
     if (currentSubdivision === suddivisione) {
@@ -428,7 +475,7 @@ metronomeToggleBtn.addEventListener('click', () => {
 });
 
 aggiornaVisualeBpm(bpm);
-aggiornaTempo(battitiPerMisura);
+aggiornaTempo(timeSignature.value);
 aggiornaSuddivisione(suddivisione);
 aggiornaVolumeMetronomo(metronomeVolumeSlider.value);
 aggiornaBottoneMetronomo();
