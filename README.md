@@ -65,55 +65,36 @@ Questo rende l'accordatore piu affidabile sia per strumenti standard sia per str
 
 Drone
 
-Il drone e stato progettato come supporto per intonazione, scale e studio melodico.
+Il drone e uno strumento pensato per suonare note continue come riferimento armonico e di intonazione.
+
+Come funziona:
+
+Il drone presenta un cerchio con i 12 tasti cromatici (Do, Do#/Reb, Re, Re#/Mib, Mi, Fa, Fa#/Solb, Sol, Sol#/Lab, La, La#/Sib, Si).
+Ogni tasto si attiva o disattiva con un clic. Si possono tenere attive piu note contemporaneamente, ottenendo accordi o intervalli continui.
+
+Le note attive vengono mostrate sotto il cerchio come etichette cliccabili: cliccare su un'etichetta rimuove quella nota.
 
 Caratteristiche:
 
-- nota base selezionabile
-- ottava selezionabile
-- volume dedicato
-- suono continuo caldo basato su **triangle wave**
-- accordatura coerente con quella dell'accordatore
-- pulsante "Cancella tutto" per azzerare rapidamente le note aggiuntive
+- interfaccia a cerchio cromatico con i 12 semitoni
+- selezione libera di una o piu note contemporaneamente
+- ottava selezionabile da 1 a 7 con i pulsanti "−" e "+"
+- suono continuo basato su **sawtooth wave** con compensazione di volume per frequenza
+- volume dedicato con slider
+- accordatura condivisa con l'accordatore (La = 440 Hz o 442 Hz)
+- pulsante "Cancella tutto" per rimuovere tutte le note attive in un colpo solo
 
 Default del drone:
 
-- nota base: "Do"
-- ottava: "3"
-- scala: "Maggiore"
+- ottava: 3
 
-Scale disponibili nel drone
+Come usarlo:
 
-- Maggiore
-- Minore naturale
-- Minore armonica
-- Minore melodica
-- Pentatonica maggiore
-- Pentatonica minore
-- Blues
-- Ionia
-- Dorica
-- Frigia
-- Lidia
-- Misolidia
-- Eolia
-- Locria
-
-Note aggiuntive della scala
-
-Per ogni scala e possibile aggiungere note derivate dalla tonalita scelta.
-
-Funzioni disponibili:
-
-- selezione delle note aggiuntive
-- etichette adattive in base alla scala ("2a", "b3", "#4", "b7", ecc.)
-- possibilita di aggiungere per ogni nota:
-  - ottava base
-  - "8va"
-  - "15ma"
-- "8va" e "15ma" possono anche essere attivate insieme
-- visualizzazione compatta di tutte le note aggiuntive su una sola linea
-- visualizzazione del solo nome della nota, senza numero di ottava
+1. Seleziona l'ottava con i pulsanti "−" e "+".
+2. Clicca una o piu note sul cerchio per attivarle.
+3. Premi "Accendi drone" per avviare il suono.
+4. Suona o canta sopra il drone per controllare l'intonazione o esercitarti sulle scale.
+5. Clicca di nuovo una nota per disattivarla, oppure usa "Cancella tutto" per azzerare tutto.
 
 Interfaccia
 
@@ -242,55 +223,36 @@ This makes the tuner more reliable both for standard instruments and for lower-p
 
 Drone
 
-The drone was designed as a support tool for intonation, scales, and melodic practice.
+The drone is a tool designed to play continuous notes as a harmonic and intonation reference.
+
+How it works:
+
+The drone shows a circle with the 12 chromatic keys (C, C#/Db, D, D#/Eb, E, F, F#/Gb, G, G#/Ab, A, A#/Bb, B).
+Each key can be toggled on or off with a click. Multiple notes can be active at the same time, creating continuous chords or intervals.
+
+Active notes are displayed below the circle as clickable labels: clicking a label removes that note.
 
 Features:
 
-- selectable root note
-- selectable octave
-- dedicated volume
-- warm continuous sound based on **triangle wave**
-- tuning reference consistent with the tuner
-- "Clear all" button to quickly clear added notes
+- chromatic circle interface with all 12 semitones
+- free selection of one or more notes simultaneously
+- selectable octave from 1 to 7 using the "−" and "+" buttons
+- continuous sound based on **sawtooth wave** with per-frequency volume compensation
+- dedicated volume slider
+- tuning reference shared with the tuner (A = 440 Hz or 442 Hz)
+- "Clear all" button to remove all active notes at once
 
 Drone defaults:
 
-- root note: "C"
-- octave: "3"
-- scale: "Major"
+- octave: 3
 
-Available drone scales
+How to use it:
 
-- Major
-- Natural minor
-- Harmonic minor
-- Melodic minor
-- Major pentatonic
-- Minor pentatonic
-- Blues
-- Ionian
-- Dorian
-- Phrygian
-- Lydian
-- Mixolydian
-- Aeolian
-- Locrian
-
-Additional scale notes
-
-For each scale it is possible to add notes derived from the selected tonal center.
-
-Available functions:
-
-- selection of additional notes
-- adaptive labels depending on the scale ("2", "b3", "#4", "b7", etc.)
-- possibility to add for each note:
-  - base octave
-  - "8va"
-  - "15ma"
-- "8va" and "15ma" can also be activated together
-- compact display of all additional notes on a single line
-- display of note name only, without octave number
+1. Select the octave using the "−" and "+" buttons.
+2. Click one or more notes on the circle to activate them.
+3. Press "Accendi drone" to start the sound.
+4. Play or sing over the drone to check intonation or practice scales.
+5. Click a note again to deactivate it, or use "Clear all" to reset everything.
 
 Interface
 
