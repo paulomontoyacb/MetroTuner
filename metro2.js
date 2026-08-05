@@ -35,7 +35,8 @@ const bpmSlider = document.getElementById('bpmSlider');
 const bpmInput = document.getElementById('bpmInput');
 const bpmValue = document.getElementById('bpmValue');
 const contatoreVisivo = document.getElementById('contatoreVisivo');
-const timeSignature = document.getElementById('timeSignature');
+const timeSigNumerator = document.getElementById('timeSigNumerator');
+const timeSigDenominator = document.getElementById('timeSigDenominator');
 const accentoToggle = document.getElementById('accentoToggle');
 const coloriToggle = document.getElementById('coloriToggle');
 const subdivisionSelect = document.getElementById('subdivisionSelect');
@@ -50,16 +51,11 @@ function aggiornaVisualeBpm(nuovoBpm) {
     bpmValue.textContent = bpm;
 }
 
-function parseTimeSignature(value) {
-    const parts = value.split('/');
-    return { beats: Number(parts[0]), denom: Number(parts[1] || 4) };
-}
 
 function getSecondsPerStep() {
-    // For /4: step = quarter note = 60/bpm
-    // For /8: step = eighth note = 60/bpm/2
+    // denominator relative to quarter note (4): /2=2x, /4=1x, /8=0.5x, /16=0.25x
     const baseStep = 60 / bpm;
-    const denomFactor = denominatore === 8 ? 0.5 : 1;
+    const denomFactor = 4 / denominatore;
     return (baseStep * denomFactor) / suddivisione;
 }
 
@@ -84,11 +80,9 @@ function renderBeatMuteGrid() {
     }
 }
 
-function aggiornaTempo(value) {
-    const parsed = parseTimeSignature(value);
-    battitiPerMisura = parsed.beats;
-    denominatore = parsed.denom;
-    timeSignature.value = value;
+function aggiornaTempo() {
+    battitiPerMisura = Number(timeSigNumerator.value);
+    denominatore = Number(timeSigDenominator.value);
 
     if (contatore > battitiPerMisura) {
         contatore = 1;
@@ -436,13 +430,16 @@ bpmInput.addEventListener('keydown', (event) => {
     }
 });
 
-timeSignature.addEventListener('change', () => {
-    aggiornaTempo(timeSignature.value);
+function onTimeSigChange() {
+    aggiornaTempo();
 
     if (metronomoAttivo) {
         riallineaClock();
     }
-});
+}
+
+timeSigNumerator.addEventListener('change', onTimeSigChange);
+timeSigDenominator.addEventListener('change', onTimeSigChange);
 
 accentoToggle.addEventListener('change', () => {
     battereAttivo = accentoToggle.checked;
@@ -475,7 +472,7 @@ metronomeToggleBtn.addEventListener('click', () => {
 });
 
 aggiornaVisualeBpm(bpm);
-aggiornaTempo(timeSignature.value);
+aggiornaTempo();
 aggiornaSuddivisione(suddivisione);
 aggiornaVolumeMetronomo(metronomeVolumeSlider.value);
 aggiornaBottoneMetronomo();

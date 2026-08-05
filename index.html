@@ -27,21 +27,42 @@
             </div>
             <div class="opzioni">
                 <div class="opzione-riga">
-                    <label for="timeSignature">Tempo</label>
-                    <select id="timeSignature" class="selettore-tempo">
-                        <option value="2/4">2/4</option>
-                        <option value="3/4">3/4</option>
-                        <option value="4/4" selected>4/4</option>
-                        <option value="5/4">5/4</option>
-                        <option value="6/4">6/4</option>
-                        <option value="7/4">7/4</option>
-                        <option value="3/8">3/8</option>
-                        <option value="5/8">5/8</option>
-                        <option value="6/8">6/8</option>
-                        <option value="7/8">7/8</option>
-                        <option value="9/8">9/8</option>
-                        <option value="12/8">12/8</option>
-                    </select>
+                    <label>Tempo</label>
+                    <div class="time-sig-selectors">
+                        <select id="timeSigNumerator" class="selettore-tempo">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                        </select>
+                        <span class="time-sig-slash">/</span>
+                        <select id="timeSigDenominator" class="selettore-tempo">
+                            <option value="2">2</option>
+                            <option value="4" selected>4</option>
+                            <option value="8">8</option>
+                            <option value="16">16</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="opzione-riga">
                     <label for="accentoToggle">Battere</label>

@@ -135,7 +135,23 @@ body {
     min-height: 44px;
 }
 
-.check-accento {
+.time-sig-selectors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.time-sig-slash {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #2a2118;
+}
+
+.time-sig-selectors .selettore-tempo {
+    min-width: 72px;
+}
+
+
     width: 22px;
     height: 22px;
     accent-color: #b64522;
