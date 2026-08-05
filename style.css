@@ -577,7 +577,7 @@ body {
     position: relative;
     width: 100%;
     padding-bottom: 100%;
-    max-width: 280px;
+    max-width: 300px;
     margin: 0 auto;
 }
 
@@ -585,20 +585,21 @@ body {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: rgba(47, 92, 72, 0.07);
-    border: 2px solid rgba(47, 92, 72, 0.18);
+    background: radial-gradient(circle at 50% 50%, rgba(47, 92, 72, 0.10) 0%, rgba(47, 92, 72, 0.04) 70%);
+    border: 2px solid rgba(47, 92, 72, 0.22);
+    box-shadow: inset 0 2px 18px rgba(47, 92, 72, 0.07);
 }
 
 .drone-circle-btn {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 46px;
-    height: 46px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     border: 2px solid #b9aa95;
-    background: #fffaf1;
+    background: #f4f0e8;
     color: #2a2118;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: bold;
     cursor: pointer;
     touch-action: manipulation;
@@ -606,42 +607,43 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+    transition: background 0.14s, border-color 0.14s, color 0.14s, transform 0.1s, box-shadow 0.14s;
     z-index: 1;
     padding: 0;
-    line-height: 1.1;
+    line-height: 1.15;
     text-align: center;
-}
-
-.drone-circle-btn--sharp {
-    background: #2a2118;
-    color: #fffaf1;
-    border-color: #2a2118;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
 }
 
 .drone-circle-btn--active {
     background: #2f5c48;
     color: #fffaf1;
     border-color: #1d3b2e;
-    transform: translate(-50%, -50%) scale(1.12);
-}
-
-.drone-circle-btn--sharp.drone-circle-btn--active {
-    background: #5db88c;
-    color: #fffaf1;
-    border-color: #2f5c48;
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 4px 14px rgba(47, 92, 72, 0.38);
 }
 
 .drone-circle-btn:active {
-    transform: translate(-50%, -50%) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.93);
 }
 
 .drone-circle-btn--active:active {
-    transform: translate(-50%, -50%) scale(1.04);
+    transform: translate(-50%, -50%) scale(1.05);
 }
 
 .dcb-name {
     pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.dcb-alt {
+    font-size: 0.6rem;
+    font-weight: normal;
+    opacity: 0.78;
+    letter-spacing: -0.02em;
 }
 
 .drone-active-notes {
@@ -740,7 +742,7 @@ body {
     }
 
     .drone-circle-wrap {
-        max-width: 240px;
+        max-width: 260px;
     }
 
     .beat-mute-btn {

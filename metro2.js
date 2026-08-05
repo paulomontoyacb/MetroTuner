@@ -193,7 +193,7 @@ function riproduciColpoSchedulato(frequenza, volumePicco, when) {
     const durataSuono = Math.min(0.09, Math.max(0.035, durataStep * 0.45));
     const stopTime = when + durataSuono;
 
-    oscillatore.type = 'triangle';
+    oscillatore.type = 'sawtooth';
     oscillatore.frequency.setValueAtTime(frequenza, when);
 
     gainNode.gain.setValueAtTime(0.0001, when);
@@ -287,7 +287,7 @@ function aggiornaUiSchedulata(when, beatNumber, subdivisionNumber) {
 
 function scheduleBeat(when, beatNumber, subdivisionNumber) {
     const inizioBattito = subdivisionNumber === 1;
-    const isMuted = inizioBattito && beatMuted[beatNumber - 1];
+    const isMuted = beatMuted[beatNumber - 1];
 
     if (!isMuted) {
         if (inizioBattito && battereAttivo && beatNumber === 1) {
