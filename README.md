@@ -30,6 +30,7 @@ Il metronomo include:
   - quintine
   - sestine
   - settimine
+- selezione dei beat: ogni battere puo essere attivato o disattivato singolarmente
 - accento del primo battere attivabile/disattivabile
 - colori visivi attivabili/disattivabili
 - slider volume dedicato
@@ -167,6 +168,7 @@ The metronome includes:
   - quintuplets
   - sextuplets
   - septuplets
+- beat selection: each individual beat can be enabled or disabled
 - optional first-beat accent
 - optional visual color feedback
 - dedicated volume slider
