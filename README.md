@@ -1,8 +1,8 @@
-MetroTuner
+Pulsar
 
 Italiano
 
-MetroTuner e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
+Pulsar e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
 Unisce metronomo, accordatore e drone in una sola interfaccia, cosi da poter lavorare su esercizi tecnici, scale, arpeggi e studio di brani senza dover usare strumenti separati.
 
 Obiettivo
@@ -178,11 +178,11 @@ Creato da Paulo Montoya
 ---
 ---
 
-MetroTuner
+Pulsar
 
 English
 
-MetroTuner is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
+Pulsar is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
 It combines metronome, tuner, and drone into one interface, allowing musicians to work on technical exercises, scales, arpeggios, and repertoire study without needing separate tools.
 
 Goal
