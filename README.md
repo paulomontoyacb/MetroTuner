@@ -1,8 +1,8 @@
-MetroTuner
+Pulsar
 
 Italiano
 
-MetroTuner e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
+Pulsar e un'app web musicale pensata per studiare tempo, intonazione e riferimento armonico in un'unica pagina.  
 Unisce metronomo, accordatore e drone in una sola interfaccia, cosi da poter lavorare su esercizi tecnici, scale, arpeggi e studio di brani senza dover usare strumenti separati.
 
 Obiettivo
@@ -125,45 +125,21 @@ File principali:
 - "pitch-worklet.js" -> analisi del pitch
 - "drone.js" -> logica del drone
 
-Migliorie implementate
-
-Durante lo sviluppo sono state introdotte varie ottimizzazioni:
-
-- pulizia di codice e stili non piu usati
-- migliore coerenza tra HTML, CSS e JavaScript
-- miglioramento del sync visivo del metronomo
-- aggiunta del drone come modulo separato
-- volumi indipendenti per metronomo e drone
-- default musicali piu pratici
-- semplificazione dell'interfaccia
-- layout piu bilanciato per uso reale nello studio
-
-Utilizzo
-
-1. Apri il progetto in un browser moderno.
-2. Attiva il microfono se vuoi usare l'accordatore.
-3. Imposta BPM e suddivisione del metronomo.
-4. Scegli nota, ottava e scala del drone.
-5. Aggiungi le note della scala che vuoi sentire come riferimento.
-6. Suona o canta sopra il drone controllando l'intonazione.
-
-Nota tecnica
-Per usare correttamente microfono e AudioWorklet e consigliato avviare il progetto tramite un piccolo server locale.
-
 ---
 
 Autore
 
 Creato da Paulo Montoya
 
+
 ---
 ---
 
-MetroTuner
+Pulsar
 
 English
 
-MetroTuner is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
+Pulsar is a music web app designed to practice rhythm, intonation, and harmonic reference on a single page.  
 It combines metronome, tuner, and drone into one interface, allowing musicians to work on technical exercises, scales, arpeggios, and repertoire study without needing separate tools.
 
 Goal
@@ -282,33 +258,6 @@ Main files:
 - "accordatore.js" -> tuner logic
 - "pitch-worklet.js" -> pitch analysis
 - "drone.js" -> drone logic
-
-Implemented improvements
-
-During development, several optimizations were introduced:
-
-- cleanup of unused code and styles
-- better consistency between HTML, CSS, and JavaScript
-- improved visual sync of the metronome
-- addition of the drone as a separate module
-- independent volume controls for metronome and drone
-- more practical musical defaults
-- simplified interface
-- more balanced layout for real study use
-
-Usage
-
-1. Open the project in a modern browser.
-2. Enable the microphone if you want to use the tuner.
-3. Set BPM and subdivision on the metronome.
-4. Choose root note, octave, and scale on the drone.
-5. Add the scale notes you want to hear as reference.
-6. Play or sing over the drone while checking intonation.
-
-Technical note
-
-To properly use microphone access and AudioWorklet, it is recommended to run the project through a small local server.
-
 
 ---
 
