@@ -126,9 +126,8 @@
 
             for (let tau = 1; tau <= maxTau; tau++) {
                 let sum = 0;
-                const limit = halfBufferLength - tau;
 
-                for (let i = 0; i < limit; i++) {
+                for (let i = 0; i < halfBufferLength; i++) {
                     const delta = buffer[i] - buffer[i + tau];
                     sum += delta * delta;
                 }
@@ -184,7 +183,7 @@
                 const denom = 2 * (2 * s1 - s2 - s0);
 
                 if (denom !== 0) {
-                    betterTau = tauEstimate + (s2 - s0) / denom;
+                    betterTau = tauEstimate + (s0 - s2) / denom;
                 }
             }
 
